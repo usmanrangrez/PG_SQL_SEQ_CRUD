@@ -3,6 +3,7 @@ import { Sequelize } from "sequelize";
 const sequelize = new Sequelize("pgsql", "postgres", "Usmaan@786", {
   host: "localhost", // Host, using
   dialect: "postgres", // Specify the dialect
+  logging: false,
 });
 
 // Define an asynchronous function to authenticate with the database
