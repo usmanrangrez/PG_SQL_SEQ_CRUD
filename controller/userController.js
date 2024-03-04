@@ -1,5 +1,6 @@
 import sequelize from "../config/database.js";
 import User from "../model/user.js";
+import { Op } from "sequelize"; // Import the Op symbol
 
 export const getAllUsers = async (req, res) => {
   try {
@@ -8,7 +9,7 @@ export const getAllUsers = async (req, res) => {
       order: [["id", "ASC"]], // Example: Order by username alphabetically
     });
 
-    res.status(200).json({ users: users });
+    res.status(200).json({ users });
   } catch (error) {
     res.status(500).send({
       message: "Error while fetching users",
@@ -37,7 +38,7 @@ export const createUser = async (req, res) => {
       user,
     });
   } catch (error) {
-    console.error("Error occured", error);
+    console.error("Error occurred", error);
     res.status(500).json({
       message: "Failed to create a user",
     });
@@ -182,11 +183,9 @@ export const totalPointsCondition = async (req, res) => {
         [sequelize.fn("SUM", sequelize.col("points")), "totalPoints"],
       ],
       group: "username", // Group by username (or another unique identifier)
-      having: sequelize.where(
-        sequelize.fn("SUM", sequelize.col("points")),
-        ">",
-        20
-      ), // Use having to filter based on the sum
+      having: {
+        [Op.gt]: 20, // Using Op.gt for greater than comparison directly with the value
+      },
     });
 
     res.json(users);
@@ -196,12 +195,12 @@ export const totalPointsCondition = async (req, res) => {
   }
 };
 
-import { Op } from "sequelize"; // Import the Op symbol
 export const avgOfPointsGreaterThan50 = async (req, res) => {
   try {
     // Calculate the average points for users with points > 50
     const result = await User.findAll({
       attributes: [
+        "user",
         [sequelize.fn("AVG", sequelize.col("points")), "averagePoints"], // Calculate the average
       ],
       where: {
@@ -224,4 +223,104 @@ export const avgOfPointsGreaterThan50 = async (req, res) => {
     );
     res.status(500).json({ message: "Error calculating average points" });
   }
+};
+
+export const findUserBelowPts = async (req, res) => {
+  try {
+    const queryLimit = parseInt(req.query.points) || 100;
+
+    const usersBelow = await User.findAll({
+      where: {
+        points: {
+          [Op.lt]: queryLimit,
+        },
+      },
+      order: [["id", "ASC"]],
+    });
+
+    res.status(200).json({
+      usersBelow,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Cannot find users below",
+    });
+  }
+};
+
+export const usersWhosePointsMatchQuery = async (req, res) => {
+  const limit = parseInt(req.query.queryLimit);
+  try {
+    const users = await User.findAll({
+      where: {
+        points: {
+          [Op.eq]: limit,
+        },
+      },
+      order: [["id", "DESC"]],
+    });
+
+    if (users.length === 0) {
+      return res.status(200).json({
+        message: `No users found with points ${limit}`,
+      });
+    }
+
+    res.status(200).json({
+      users,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error while getting users",
+    });
+  }
+};
+
+export const userWhoseLength = async (req, res) => {
+  const length = parseInt(req.query.length) || 6;
+  try {
+    const users = await User.findAll({
+      where: sequelize.where(
+        sequelize.fn("LENGTH", sequelize.col("username")),
+        {
+          [Op.eq]: length,
+        }
+      ),
+    });
+    res.status(200).json({
+      users,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error in fetching users",
+    });
+  }
+};
+
+export const updateUsingParams = async (req, res) => {
+  try {
+    const name = req.query.name;
+    const pointsToUpdate = req.query.points;
+    const [noOfAffectedRows, actualAffected] = await User.update(
+      { points: pointsToUpdate },
+      { where: { username: name } }
+    );
+
+    res.status(200).json({
+      message: `Updated ${noOfAffectedRows} rows successfully for user ${name}`,
+      actualAffected: actualAffected,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error in updating user points",
+      error: error.message,
+    });
+  }
+};
+
+export const userWithMaxPoints = async (req, res) => {
+  const user = await User.max("points");
+  res.status(200).json({
+    user: user,
+  });
 };
