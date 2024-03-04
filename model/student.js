@@ -66,12 +66,4 @@ const Student = sequelize.define(
   { freezeTableName: true, timestamps: false }
 );
 
-Student.sync({ alter: true })
-  .then(() => {
-    console.log("Student synched successfully!");
-  })
-  .catch((err) => {
-    console.log("Error occured", err);
-  });
-
 export default Student;
