@@ -1,5 +1,6 @@
 import express from "express";
 import userRoutes from "./routes/userRoute.js";
+import studentRoutes from "./routes/studentRoute.js";
 
 const app = express();
 
@@ -11,6 +12,7 @@ app.get("/", (req, res) => {
 });
 
 app.use(userRoutes);
+app.use("/students/api/v1", studentRoutes);
 
 app.listen(3000, () => {
   console.log(`Listening to server at 3000`);
