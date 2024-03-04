@@ -1,6 +1,7 @@
 import { Op } from "sequelize";
 import Student from "../model/student.js";
 import sequelize from "../config/database.js";
+import bcrypt from "bcrypt";
 
 export const createStudent = async (req, res) => {
   try {
@@ -12,6 +13,7 @@ export const createStudent = async (req, res) => {
     console.error("Error in creating student", error);
     res.status(500).json({
       message: "Error in creating student",
+      error: error.message,
     });
   }
 };
@@ -185,6 +187,38 @@ export const countStudentsBySchoolYear = async (req, res) => {
     console.error("Error in counting students by school year", error);
     res.status(500).json({
       message: "Error in counting students by school year",
+      error: error.message,
+    });
+  }
+};
+
+export const validateUser = async (req, res) => {
+  try {
+    const { name, password } = req.body;
+
+    //find user by username
+    const user = await Student.findOne({ where: { name: name } });
+    console.log(user);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found!",
+      });
+    }
+
+    //compare passwords
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
+
+    // If the password matches, return a success response (or proceed with generating a token or session)
+    res.status(200).json({ message: "User validated successfully" });
+  } catch (error) {
+    console.error("Error in user check");
+    res.status(500).json({
+      message: "Error in checking user",
       error: error.message,
     });
   }
