@@ -12,20 +12,35 @@ const Student = sequelize.define(
     name: {
       type: DataTypes.STRING,
       allowNull: false,
+      unique: true,
       validate: {
         len: {
           args: [4, 20],
           msg: "Name must be between 4 and 20 characters long",
         },
       },
+      //only affects when we fetch (while setters actually do)
+      get() {
+        const rawValue = this.getDataValue("name");
+        return rawValue.toUpperCase();
+      },
     },
     password: {
       type: DataTypes.STRING,
       allowNull: false,
+      /*
+      Sequelize's setter functions are synchronous and cannot handle promises returned by asynchronous functions like bcrypt.hash
+      */
+      //Option 1: Use Synchronous Hashing in the Setter
+      //Option 2: Hash Passwords Before Model Creation/Update
+      // set(value) {
+      //   const hashedPassword = hashPassword(value);
+      //   this.setDataValue("password", hashedPassword);
+      // },
       validate: {
         isValidPassword(value) {
           const passwordRegex =
-            /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{8,}$/;
+            /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/;
           if (!passwordRegex.test(value)) {
             throw new Error(
               "Password must contain at least one uppercase letter, one lowercase letter, one digit, and be at least 8 characters long"
@@ -62,8 +77,24 @@ const Student = sequelize.define(
         },
       },
     },
+    demo: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return `${this.name} ${this.subscribed_to_wittcode}`;
+      },
+    },
   },
+
   { freezeTableName: true, timestamps: false }
 );
+
+sequelize
+  .sync()
+  .then(() => {
+    console.log("Student table synched");
+  })
+  .catch(() => {
+    console.log("Error in sync Student table");
+  });
 
 export default Student;

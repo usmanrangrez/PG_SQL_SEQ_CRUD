@@ -5,14 +5,6 @@ const sequelize = new Sequelize("pgsql", "postgres", "Usmaan@786", {
   dialect: "postgres", // Specify the dialect
   logging: false,
 });
-const syncModels = async () => {
-  try {
-    await sequelize.sync();
-    console.log("All models have been synched successfully!");
-  } catch (error) {
-    console.log("Error in synching models", error.messages);
-  }
-};
 
 // Define an asynchronous function to authenticate with the database
 const authenticateDatabase = async () => {
@@ -23,9 +15,6 @@ const authenticateDatabase = async () => {
     console.error("Unable to connect to the database:", error);
   }
 };
-
-// Call the asynchronous function to execute the sync
-syncModels();
 
 // Call the asynchronous function to execute the authentication
 authenticateDatabase();

@@ -1,14 +1,29 @@
 import { Op } from "sequelize";
 import Student from "../model/student.js";
 import sequelize from "../config/database.js";
-import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import { comparePassword, hashPassword } from "../utils/hashPasswords.js";
+const secretKey = "Usmaan123";
 
 export const createStudent = async (req, res) => {
   try {
-    const studentBody = req.body;
-    const student = await Student.create(studentBody);
-
-    res.status(201).json({ student });
+    const {
+      name,
+      favourite_class,
+      subscribed_to_wittcode,
+      school_year,
+      password,
+    } = req.body;
+    const hashedPassword = await hashPassword(password);
+    const newStudent = await Student.create({
+      name,
+      favourite_class,
+      subscribed_to_wittcode,
+      school_year,
+      password: hashedPassword, // Use the hashed password
+    });
+    // Handle success (e.g., send back the new user without the password)
+    res.json({ student: newStudent });
   } catch (error) {
     console.error("Error in creating student", error);
     res.status(500).json({
@@ -192,13 +207,13 @@ export const countStudentsBySchoolYear = async (req, res) => {
   }
 };
 
+//additionaly used in loginStudent
 export const validateUser = async (req, res) => {
   try {
     const { name, password } = req.body;
 
     //find user by username
     const user = await Student.findOne({ where: { name: name } });
-    console.log(user);
 
     if (!user) {
       return res.status(404).json({
@@ -207,7 +222,7 @@ export const validateUser = async (req, res) => {
     }
 
     //compare passwords
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await comparePassword(password, user.password);
 
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid password" });
@@ -219,6 +234,80 @@ export const validateUser = async (req, res) => {
     console.error("Error in user check");
     res.status(500).json({
       message: "Error in checking user",
+      error: error.message,
+    });
+  }
+};
+
+export const findStudentOrCreate = async (req, res) => {
+  const {
+    name,
+    favourite_class,
+    school_year,
+    subscribed_to_wittcode,
+    password,
+  } = req.body;
+
+  try {
+    const [user, created] = await Student.findOrCreate({
+      where: {
+        name,
+        favourite_class,
+        school_year,
+        subscribed_to_wittcode,
+        password,
+      },
+    });
+
+    if (created) {
+      return res.status(200).json({
+        message: "User Already present",
+        user,
+      });
+    }
+
+    res.status(201).json({
+      message: "User created",
+      user,
+    });
+  } catch (error) {
+    console.error("Error while creating or find");
+    res.status(500).json({
+      message: "Error while findOrCreate",
+      error: error.message,
+    });
+  }
+};
+
+//say we have to retrieve username we can retrive it in all capitals using getters
+//likewise we can do hashing using setters
+//check student model for this
+
+export const loginStudent = async (req, res) => {
+  const { name, password } = req.body;
+  try {
+    // Ensure you are querying the correct field for username
+    const student = await Student.findOne({ where: { name } }); // Adjust based on your schema
+    if (!student) {
+      return res.status(401).json({ message: "No user found" });
+    }
+    const isMatch = await comparePassword(password, student.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
+
+    // Ensure your secretKey is correctly defined and used here
+    const token = jwt.sign(
+      { student_id: student.student_id, username: student.name }, // Adjust based on your schema
+      secretKey,
+      { expiresIn: "2h" }
+    );
+
+    res.json({ message: "Login successful", token });
+  } catch (error) {
+    console.error("Error in log in", error);
+    res.status(500).json({
+      message: "Error in logging in",
       error: error.message,
     });
   }

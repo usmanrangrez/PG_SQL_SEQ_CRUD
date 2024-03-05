@@ -25,4 +25,13 @@ const User = sequelize.define(
   { freezeTableName: true }
 );
 
+sequelize
+  .sync()
+  .then(() => {
+    console.log("User table synched");
+  })
+  .catch(() => {
+    console.log("Error in sync User table");
+  });
+
 export default User;
