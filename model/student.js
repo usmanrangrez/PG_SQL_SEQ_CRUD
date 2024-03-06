@@ -1,4 +1,4 @@
-import { DataTypes } from "sequelize";
+import { DataTypes, QueryTypes } from "sequelize";
 import sequelize from "../config/database.js";
 
 const Student = sequelize.define(
@@ -89,12 +89,12 @@ const Student = sequelize.define(
 );
 
 sequelize
-  .sync()
+  .sync({ alter: true })
   .then(() => {
-    console.log("Student table synched");
+    console.log("Student model synched successfully!");
   })
-  .catch(() => {
-    console.log("Error in sync Student table");
+  .catch((err) => {
+    console.log("Error in sync Student table", err);
   });
 
 export default Student;
