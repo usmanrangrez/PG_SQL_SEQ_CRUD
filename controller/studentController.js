@@ -33,6 +33,8 @@ export const createStudent = async (req, res) => {
   }
 };
 
+//modify and upload excel sheet
+//write new api which download all students using excel sheet
 export const bulkCreateStudents = async (req, res) => {
   try {
     const studentsData = req.body; // Assuming the data is sent in the request body
@@ -283,6 +285,8 @@ export const findStudentOrCreate = async (req, res) => {
 //likewise we can do hashing using setters
 //check student model for this
 
+//name cannot be unique
+//user id create
 export const loginStudent = async (req, res) => {
   const { name, password } = req.body;
   try {

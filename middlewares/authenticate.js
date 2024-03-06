@@ -1,5 +1,7 @@
 import jwt from "jsonwebtoken";
 
+process.env.PORT;
+
 const secretKey = "Usmaan123"; // Ensure you have a secret key
 
 export const authenticateJWT = (req, res, next) => {

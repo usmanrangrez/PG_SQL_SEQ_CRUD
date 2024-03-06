@@ -32,9 +32,9 @@ Association: By calling Country.hasOne(Capital);, a one-to-one relationship is e
 /* it's important to define the relationship from both sides to ensure proper association handling and to leverage Sequelize's full functionality. When you define only one side of the association (e.g., Country.hasOne(Capital)), Sequelize knows how to link a Capital to a Country but doesn't automatically create the inverse association. This means while you can set a Capital for a Country, you might run into limitations when trying to access or navigate the relationship from the Capital side.
  */
 // This will add a foreign key in Capital pointing to Country
-Country.hasOne(Capital);
+Country.hasOne(Capital, { onDelete: "CASCADE" });
 // This will let Sequelize know that Capital is associated with Country, allowing you to navigate from Capital to Country
-Capital.belongsTo(Country);
+Capital.belongsTo(Country, { onDelete: "CASCADE" });
 
 const associateCapitalWithCountry = async (countryName, capitalName) => {
   try {
@@ -131,8 +131,17 @@ const getCountryAssociatedWithCapital = async (capitalName) => {
 
 const executeOperationsSequentially = async () => {
   try {
+    //checking for cascade
+    /*
+    await Country.destroy({
+      where: {
+        countryName: "Spain",
+      },
+   });
+   */
+
     // First, associate the capital with the country
-    await associateCapitalWithCountry("russia", "mso");
+    await associateCapitalWithCountry("Russia", "msoogft");
 
     // Once the association is successfully done, fetch the capital of another country
     await getCapitalAssociatedWithCountry("Russia");
